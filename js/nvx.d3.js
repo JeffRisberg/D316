@@ -41,23 +41,18 @@
 
     line1
       .clipEdge(false)
-      .padData(true)
-    ;
+      .padData(true);
     line2
       .clipEdge(false)
-      .padData(true)
-    ;
+      .padData(true);
     xAxis
       .orient('bottom')
       .tickPadding(7)
-      .highlightZero(false)
-    ;
+      .highlightZero(false);
     y1Axis
-      .orient('left')
-    ;
+      .orient('left');
     y2Axis
-      .orient('right')
-    ;
+      .orient('right');
 
     //============================================================
 
@@ -66,15 +61,14 @@
     //------------------------------------------------------------
 
     var showTooltip = function (e, offsetElement) {
-        var left = e.pos[0] + ( offsetElement.offsetLeft || 0 ),
-          top = e.pos[1] + ( offsetElement.offsetTop || 0),
-          x = xAxis.tickFormat()(line1.x()(e.point, e.pointIndex)),
-          y = (e.series.bar ? y1Axis : y2Axis).tickFormat()(line1.y()(e.point, e.pointIndex)),
-          content = tooltip(e.series.key, x, y, e, chart);
+      var left = e.pos[0] + ( offsetElement.offsetLeft || 0 ),
+        top = e.pos[1] + ( offsetElement.offsetTop || 0),
+        x = xAxis.tickFormat()(line1.x()(e.point, e.pointIndex)),
+        y = (e.series.bar ? y1Axis : y2Axis).tickFormat()(line1.y()(e.point, e.pointIndex)),
+        content = tooltip(e.series.key, x, y, e, chart);
 
-        nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
-      }
-      ;
+      nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
+    };
 
     //------------------------------------------------------------
 
@@ -91,7 +85,6 @@
         chart.update = function () {
           container.transition().call(chart);
         };
-        // chart.container = this;
 
         //set state.disabled
         state.disabled = data.map(function (d) {
@@ -140,19 +133,17 @@
         // Setup Scales
 
         var dataLines1 = data.filter(function (d) {
-          return !d.disabled;
+          return !d.disabled && d.axis == 1;
         });
         var dataLines2 = data.filter(function (d) {
-          return !d.disabled;
+          return !d.disabled && d.axis == 2;
         });
 
-        //x = xAxis.scale();
         x = dataLines1.filter(function (d) {
           return !d.disabled;
         }).length && dataLines2.filter(function (d) {
           return !d.disabled;
-        })[0].values.length ? line1.xScale() : line2.xScale();
-        //x = dataLines.filter(function(d) { return !d.disabled; }).length ? lines.xScale() : bars.xScale(); //old code before change above
+        }).length ? line1.xScale() : line2.xScale();
         y1 = line1.yScale();
         y2 = line2.yScale();
 
@@ -183,7 +174,7 @@
           g.select('.nv-legendWrap')
             .datum(data.map(function (series) {
               series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
-              series.key = series.originalKey + (series.line1 ? ' (left axis)' : ' (right axis)');
+              series.key = series.originalKey + (series.axis == 1 ? ' (left axis)' : ' (right axis)');
               return series;
             }))
             .call(legend);
@@ -211,7 +202,7 @@
           .color(data.map(function (d, i) {
             return d.color || color(d, i);
           }).filter(function (d, i) {
-              return !data[i].disabled && !data[i].bar
+              return !data[i].disabled && (data[i].axis == 1);
             }))
 
         line2
@@ -220,7 +211,7 @@
           .color(data.map(function (d, i) {
             return d.color || color(d, i);
           }).filter(function (d, i) {
-              return !data[i].disabled && data[i].bar
+              return !data[i].disabled && (data[i].axis == 2);
             }))
 
         var line1Wrap = g.select('.nv-line1Wrap')
@@ -232,7 +223,6 @@
           .datum(dataLines2 && !dataLines2.disabled ? dataLines2 : [
             {values: []}
           ]);
-        //.datum(!dataLines[0].disabled ? dataLines : [{values:dataLines[0].values.map(function(d) { return [d[0], null] }) }] );
 
         d3.transition(line1Wrap).call(line1);
         d3.transition(line2Wrap).call(line2);
@@ -264,12 +254,11 @@
         y2Axis
           .scale(y2)
           .ticks(availableHeight / 36)
-          .tickSize(dataLines2.length ? 0 : -availableWidth, 0); // Show the y2 rules only if y1 has none
+          .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y2 rules only if y1 has none
 
         g.select('.nv-y2.nv-axis')
           .style('opacity', dataLines2.length ? 1 : 0)
           .attr('transform', 'translate(' + availableWidth + ',0)');
-        //.attr('transform', 'translate(' + x.range()[1] + ',0)');
 
         d3.transition(g.select('.nv-y2.nv-axis'))
           .call(y2Axis);

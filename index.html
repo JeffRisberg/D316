@@ -7,7 +7,6 @@
   <link href="css/nv.d3.css" rel="stylesheet">
 
   <script type="text/javascript" src="js/jquery-1.11.0.min.js"></script>
-  <script type="text/javascript" src="js/stream_layers.js"></script>
   <script type="text/javascript" src="js/d3.js"></script>
   <script type="text/javascript" src="js/nv.d3.js"></script>
   <script type="text/javascript" src="js/nvx.d3.js"></script>
@@ -19,101 +18,135 @@
     height: 350px;
     width: 600px;
   }
-
-  #chart2 svg {
-    height: 350px;
-    width: 600px;
-  }
 </style>
+
+<input type="checkbox" id="quantityIncludeZero">Quantity Include Zero
+<input type="checkbox" id="priceIncludeZero">Price Include Zero
 
 <div id="chart1">
   <svg></svg>
 </div>
-<div id="chart2">
-  <svg></svg>
-</div>
 
 <script type="text/javascript">
+  $(document).ready(function () {
 
-  d3.json("data1.json", function (error, data) {
-    console.log(error);
-    console.log(data);
+        var quantityIncludeZero = false;
+        var priceIncludeZero = false;
+        var dataList = [];
 
-    nv.addGraph(function () {
-      var chart = nv.models.multiLineChart()
-          .margin({top: 30, right: 60, bottom: 50, left: 70})
-          .x(function (d, i) {
-            return i
-          })
-          .y(function (d) {
-            return d[1]
-          })
-          .color(d3.scale.category10().range());
+        $("#quantityIncludeZero").on("change", function (e) {
+          quantityIncludeZero = $('#quantityIncludeZero').is(':checked');
 
-      chart.xAxis
-          .showMaxMin(false)
-          .tickFormat(function (d) {
-            var dx = data[0].values[d] && data[0].values[d][0] || 0;
-            return d3.time.format('%x')(new Date(dx))
+          if (dataList.length > 0) {
+            redraw();
+          }
+        });
+
+        $("#priceIncludeZero").on("change", function (e) {
+          priceIncludeZero = $('#priceIncludeZero').is(':checked');
+
+          if (dataList.length > 0) {
+            redraw();
+          }
+        });
+
+        d3.json("data.json", function (error, data) {
+          dataList = data;
+          redraw();
+        });
+
+        function redraw() {
+          var minValue1 = Number.MAX_VALUE;
+          var maxValue1 = Number.MIN_VALUE;
+          var minValue2 = Number.MAX_VALUE;
+          var maxValue2 = Number.MIN_VALUE;
+
+          dataList.forEach(function (data) {
+            var axis = data.axis;
+            data.values.forEach(function (valuePair) {
+              var value = valuePair[1];
+
+              if (axis == 1) {
+                minValue1 = Math.min(value, minValue1);
+                maxValue1 = Math.max(value, maxValue1);
+              }
+              else {
+                minValue2 = Math.min(value, minValue2);
+                maxValue2 = Math.max(value, maxValue2);
+              }
+            });
           });
 
-      chart.y1Axis
-          .tickFormat(d3.format(',f'));
-
-      chart.y2Axis
-          .tickFormat(function (d) {
+          var leftFormat = d3.format(',f');
+          var rightFormat = function (d) {
             return '$' + d3.format(',f')(d)
+          };
+
+          var leftMargin = 70;
+          var rightMargin = 50;
+
+          var minValue1StrLen = leftFormat(minValue1).length;
+          var maxValue1StrLen = leftFormat(maxValue1).length;
+          var minValue2StrLen = rightFormat(minValue2).length;
+          var maxValue2StrLen = rightFormat(maxValue2).length;
+
+          // The "* 8" approximates the text width of the string
+          leftMargin = Math.max(70, minValue1StrLen * 8, maxValue1StrLen * 8);
+          rightMargin = Math.max(70, minValue2StrLen * 8, maxValue2StrLen * 8);
+
+          nv.addGraph(function () {
+            // Use the extended chart code
+            var chart = nv.models.multiLineChart()
+                .margin({top: 30, right: rightMargin, bottom: 50, left: leftMargin})
+                .x(function (d, i) {
+                  return i
+                })
+                .y(function (d) {
+                  return d[1]
+                })
+                .color(d3.scale.category10().range());
+
+            chart.xAxis
+                .showMaxMin(false)
+                .tickFormat(function (d) {
+                  var dx = dataList[0].values[d] && dataList[0].values[d][0] || 0;
+                  return d3.time.format('%x')(new Date(dx))
+                });
+
+            chart.y1Axis.tickFormat(leftFormat);
+            chart.y2Axis.tickFormat(rightFormat);
+
+            if (quantityIncludeZero) {
+              chart.line1.forceY([0]);
+            }
+            else {
+              chart.line1.forceY([]);
+            }
+
+            if (priceIncludeZero) {
+              chart.line2.forceY([0]);
+            }
+            else {
+              chart.line2.forceY([]);
+            }
+
+            $('#chart1 svg').empty();
+
+            d3.select('#chart1 svg')
+                .datum(dataList)
+                .transition()
+                .duration(500)
+                .call(chart);
+
+            nv.utils.windowResize(chart.update);
+
+            return chart;
           });
+        }
+      }
 
-      //chart.bars.forceY([0]);
-
-      d3.select('#chart1 svg')
-          .datum(data)
-          .transition()
-          .duration(500)
-          .call(chart);
-
-      nv.utils.windowResize(chart.update);
-
-      return chart;
-    });
-  });
-
-  var testdata = stream_layers(2, 10 + Math.random() * 100, .1).map(function (data, i) {
-    return {
-      key: 'Stream' + i,
-      values: data.map(function (a) {
-        a.y = a.y * (i <= 1 ? -1 : 1);
-        return a
-      })
-    };
-  });
-
-  testdata[0].type = "line"
-  testdata[0].yAxis = 1
-  testdata[1].type = "line"
-  testdata[1].yAxis = 2
-
-  nv.addGraph(function () {
-    var chart = nv.models.multiChart()
-        .margin({top: 30, right: 60, bottom: 50, left: 70})
-        .color(d3.scale.category10().range());
-
-    chart.xAxis
-        .tickFormat(d3.format(',f'));
-
-    chart.yAxis1
-        .tickFormat(d3.format(',.1f'));
-
-    chart.yAxis2
-        .tickFormat(d3.format(',.1f'));
-
-    d3.select('#chart2 svg')
-        .datum(testdata)
-        .transition().duration(500).call(chart);
-
-    return chart;
-  });
+  )
+  ;
 
 </script>
 </body>
