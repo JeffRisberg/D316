@@ -237,6 +237,7 @@
 
         g.select('.nv-x.nv-axis')
           .attr('transform', 'translate(0,' + y1.range()[0] + ')');
+
         d3.transition(g.select('.nv-x.nv-axis'))
           .call(xAxis);
 
