@@ -8,9 +8,11 @@
 
     var line1 = nv.models.line()
       , line2 = nv.models.line()
+      , line3 = nv.models.line()
       , xAxis = nv.models.axis()
       , y1Axis = nv.models.axis()
       , y2Axis = nv.models.axis()
+      , y3Axis = nv.models.axis()
       , legend = nv.models.legend()
       ;
 
@@ -33,6 +35,7 @@
       , x
       , y1
       , y2
+      , y3
       , state = {}
       , defaultState = null
       , noData = "No Data Available."
@@ -53,6 +56,8 @@
       .orient('left');
     y2Axis
       .orient('right');
+    y3Axis
+      .orient('right');
 
     //============================================================
 
@@ -62,9 +67,10 @@
 
     var showTooltip = function (e, offsetElement) {
       var left = e.pos[0] + ( offsetElement.offsetLeft || 0 ),
-        top = e.pos[1] + ( offsetElement.offsetTop || 0),
+        top = e.pos[1] + ( offsetElement.offsetTop || 0 ),
         x = xAxis.tickFormat()(line1.x()(e.point, e.pointIndex)),
-        y = ((e.series.axis == 1) ? y1Axis : y2Axis).tickFormat()(line1.y()(e.point, e.pointIndex)),
+        yAxis = (e.series.axis == 3) ? y3Axis : (e.series.axis == 2) ? y2Axis : y1Axis,
+        y = yAxis.tickFormat()(line1.y()(e.point, e.pointIndex)),
         content = tooltip(e.series.key, x, y, e, chart);
 
       nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
@@ -138,12 +144,17 @@
         var dataLines2 = data.filter(function (d) {
           return d.axis == 2;
         });
+        var dataLines3 = data.filter(function (d) {
+          return d.axis == 3;
+        });
+        var tripleAxis = dataLines3.length > 0;
 
         x = dataLines1.filter(function (d) {
           return !d.disabled;
         }).length ? line1.xScale() : line2.xScale();
         y1 = line1.yScale();
         y2 = line2.yScale();
+        y3 = line3.yScale();
 
         //------------------------------------------------------------
 
@@ -157,8 +168,10 @@
         gEnter.append('g').attr('class', 'nv-x nv-axis');
         gEnter.append('g').attr('class', 'nv-y1 nv-axis');
         gEnter.append('g').attr('class', 'nv-y2 nv-axis');
+        gEnter.append('g').attr('class', 'nv-y3 nv-axis');
         gEnter.append('g').attr('class', 'nv-line1Wrap');
         gEnter.append('g').attr('class', 'nv-line2Wrap');
+        gEnter.append('g').attr('class', 'nv-line3Wrap');
         gEnter.append('g').attr('class', 'nv-legendWrap');
 
         //------------------------------------------------------------
@@ -167,12 +180,20 @@
         // Legend
 
         if (showLegend) {
-          legend.width(availableWidth / 2);
+          legend.width(availableWidth);
 
           g.select('.nv-legendWrap')
             .datum(data.map(function (series) {
+              var axis = series.axis;
+              var axisLabel = null;
+              if (tripleAxis) {
+                axisLabel = (axis > 2) ? ' (right axis)' : (axis > 1) ? ' (middle axis)' : ' (left axis)';
+              }
+              else {
+                axisLabel = (axis > 1) ? ' (right axis)' : ' (left axis)';
+              }
               series.originalKey = series.originalKey === undefined ? series.key : series.originalKey;
-              series.key = series.originalKey + (series.axis == 1 ? ' (left axis)' : ' (right axis)');
+              series.key = series.originalKey + axisLabel;
               return series;
             }))
             .call(legend);
@@ -184,7 +205,7 @@
           }
 
           g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + ( availableWidth / 2 ) + ',' + (-margin.top) + ')');
+            .attr('transform', 'translate(' + ( availableWidth / 10 ) + ',' + (-margin.top) + ')');
         }
 
         //------------------------------------------------------------
@@ -212,6 +233,15 @@
               return !data[i].disabled && (data[i].axis == 2);
             }))
 
+        line3
+          .width(availableWidth)
+          .height(availableHeight)
+          .color(data.map(function (d, i) {
+            return d.color || color(d, i);
+          }).filter(function (d, i) {
+              return !data[i].disabled && (data[i].axis == 3);
+            }))
+
         var line1Wrap = g.select('.nv-line1Wrap')
           .datum(dataLines1 && !dataLines1.disabled ? dataLines1 : [
             {values: []}
@@ -222,8 +252,14 @@
             {values: []}
           ]);
 
+        var line3Wrap = g.select('.nv-line3Wrap')
+          .datum(dataLines3 && !dataLines3.disabled ? dataLines3 : [
+            {values: []}
+          ]);
+
         d3.transition(line1Wrap).call(line1);
         d3.transition(line2Wrap).call(line2);
+        d3.transition(line3Wrap).call(line3);
 
         //------------------------------------------------------------
 
@@ -257,10 +293,22 @@
 
         g.select('.nv-y2.nv-axis')
           .style('opacity', dataLines2.length ? 1 : 0)
-          .attr('transform', 'translate(' + availableWidth + ',0)');
+          .attr('transform', 'translate(' + (0 + availableWidth) + ',0)');
 
         d3.transition(g.select('.nv-y2.nv-axis'))
           .call(y2Axis);
+
+        y3Axis
+          .scale(y3)
+          .ticks(availableHeight / 36)
+          .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y3 rules only if y1 has none
+
+        g.select('.nv-y3.nv-axis')
+          .style('opacity', dataLines3.length ? 1 : 0)
+          .attr('transform', 'translate(' + (40 + availableWidth) + ',0)');
+
+        d3.transition(g.select('.nv-y3.nv-axis'))
+          .call(y3Axis);
 
         //------------------------------------------------------------
 
@@ -320,6 +368,15 @@
       dispatch.tooltipHide(e);
     });
 
+    line3.dispatch.on('elementMouseover.tooltip', function (e) {
+      e.pos = [e.pos[0] + margin.left, e.pos[1] + margin.top];
+      dispatch.tooltipShow(e);
+    });
+
+    line3.dispatch.on('elementMouseout.tooltip', function (e) {
+      dispatch.tooltipHide(e);
+    });
+
     dispatch.on('tooltipHide', function () {
       if (tooltips) nv.tooltip.cleanup();
     });
@@ -335,9 +392,11 @@
     chart.legend = legend;
     chart.line1 = line1;
     chart.line2 = line2;
+    chart.line3 = line3;
     chart.xAxis = xAxis;
     chart.y1Axis = y1Axis;
     chart.y2Axis = y2Axis;
+    chart.y3Axis = y3Axis;
 
     d3.rebind(chart, line1, 'defined', 'size', 'interpolate');
     //TODO: consider rebinding x, y and some other stuff
@@ -350,6 +409,7 @@
       getX = _;
       line1.x(_);
       line2.x(_);
+      line3.x(_);
       return chart;
     };
 
@@ -358,6 +418,7 @@
       getY = _;
       line1.y(_);
       line2.y(_);
+      line3.y(_);
       return chart;
     };
 

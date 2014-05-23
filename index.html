@@ -20,13 +20,19 @@
   }
 </style>
 
-<select id="quantityPlotMode" name="plotMode">
+<select id="quantityPlotMode" name="quantityPlotMode">
   <option value="smoothLine">Smooth Line</option>
   <option value="points">Points</option>
   <option value="bars">Bars</option>
 </select>
 
-<select id="pricePlotMode" name="plotMode">
+<select id="pricePlotMode" name="pricePlotMode">
+  <option value="smoothLine">Smooth Line</option>
+  <option value="points">Points</option>
+  <option value="bars">Bars</option>
+</select>
+
+<select id="costPlotMode" name="costPlotMode">
   <option value="smoothLine">Smooth Line</option>
   <option value="points">Points</option>
   <option value="bars">Bars</option>
@@ -34,194 +40,254 @@
 
 <input type="checkbox" id="quantityIncludeZero">Quantity Include Zero
 <input type="checkbox" id="priceIncludeZero">Price Include Zero
+<input type="checkbox" id="costIncludeZero">Cost Include Zero
 
 <input type="checkbox" id="quantityHighlight">Quantity Highlight
 <input type="checkbox" id="priceHighlight">Price Highlight
+<input type="checkbox" id="costHighlight">Cost Highlight
 
 <div id="chart1">
   <svg></svg>
 </div>
 
 <script type="text/javascript">
-  $(document).ready(function () {
+$(document).ready(function () {
 
-    var quantityPlotMode = "smoothLine";
-    var pricePlotMode = "smoothLine";
-    var quantityIncludeZero = false;
-    var priceIncludeZero = false;
-    var quantityHighlight = false;
-    var priceHighlight = false;
-    var dataList = [];
+  var quantityPlotMode = "smoothLine";
+  var pricePlotMode = "smoothLine";
+  var costPlotMode = "smoothLine";
+  var quantityIncludeZero = false;
+  var priceIncludeZero = false;
+  var costIncludeZero = false;
+  var quantityHighlight = false;
+  var priceHighlight = false;
+  var costHighlight = false;
+  var dataList = [];
 
-    $("#pricePlotMode").on("change", function (e) {
-      pricePlotMode = $('#pricePlotMode').val();
+  $("#pricePlotMode").on("change", function (e) {
+    pricePlotMode = $('#pricePlotMode').val();
 
-      if (dataList.length > 0) {
-        redraw();
-      }
-    });
-
-    $("#quantityPlotMode").on("change", function (e) {
-      quantityPlotMode = $('#quantityPlotMode').val();
-
-      if (dataList.length > 0) {
-        redraw();
-      }
-    });
-
-    $("#quantityIncludeZero").on("change", function (e) {
-      quantityIncludeZero = $('#quantityIncludeZero').is(':checked');
-
-      if (dataList.length > 0) {
-        redraw();
-      }
-    });
-
-    $("#priceIncludeZero").on("change", function (e) {
-      priceIncludeZero = $('#priceIncludeZero').is(':checked');
-
-      if (dataList.length > 0) {
-        redraw();
-      }
-    });
-
-    $("#quantityHighlight").on("change", function (e) {
-      quantityHighlight = $('#quantityHighlight').is(':checked');
-
-      if (dataList.length > 0) {
-        redraw();
-      }
-    });
-
-    $("#priceHighlight").on("change", function (e) {
-      priceHighlight = $('#priceHighlight').is(':checked');
-
-      if (dataList.length > 0) {
-        redraw();
-      }
-    });
-
-    d3.json("data.json", function (error, data) {
-      dataList = data;
+    if (dataList.length > 0) {
       redraw();
-    });
-
-    function redraw() {
-      var minValue1 = Number.MAX_VALUE;
-      var maxValue1 = Number.MIN_VALUE;
-      var minValue2 = Number.MAX_VALUE;
-      var maxValue2 = Number.MIN_VALUE;
-
-      dataList.forEach(function (data) {
-        var axis = data.axis;
-        data.values.forEach(function (valuePair) {
-          var value = valuePair[1];
-
-          if (axis == 1) {
-            minValue1 = Math.min(value, minValue1);
-            maxValue1 = Math.max(value, maxValue1);
-          }
-          else {
-            minValue2 = Math.min(value, minValue2);
-            maxValue2 = Math.max(value, maxValue2);
-          }
-        });
-      });
-
-      var leftFormat = d3.format(',f');
-      var rightFormat = function (d) {
-        return '$' + d3.format(',f')(d)
-      };
-
-      var leftMargin = 70;
-      var rightMargin = 50;
-
-      var minValue1StrLen = leftFormat(minValue1).length;
-      var maxValue1StrLen = leftFormat(maxValue1).length;
-      var minValue2StrLen = rightFormat(minValue2).length;
-      var maxValue2StrLen = rightFormat(maxValue2).length;
-
-      // The "* 8" approximates the text width of the string
-      leftMargin = Math.max(70, minValue1StrLen * 8, maxValue1StrLen * 8);
-      rightMargin = Math.max(70, minValue2StrLen * 8, maxValue2StrLen * 8);
-
-      nv.addGraph(function () {
-        // Use the extended chart code
-        var chart = nv.models.multiLineChart()
-            .margin({top: 30, right: rightMargin, bottom: 50, left: leftMargin})
-            .x(function (d, i) {
-              return i
-            })
-            .y(function (d) {
-              return d[1]
-            })
-            .color(d3.scale.category10().range());
-
-        chart.xAxis
-            .showMaxMin(false)
-            .tickFormat(function (d) {
-              var dx = dataList[0].values[d] && dataList[0].values[d][0] || 0;
-              return d3.time.format('%x')(new Date(dx))
-            });
-
-        chart.y1Axis.tickFormat(leftFormat);
-        chart.y2Axis.tickFormat(rightFormat);
-
-        if (quantityPlotMode == "points") {
-          dataList[0]['use-points'] = true;
-        }
-        else {
-          delete dataList[0]['use-points'];
-        }
-
-        if (pricePlotMode == "points") {
-          dataList[1]['use-points'] = true;
-        }
-        else {
-          delete dataList[1]['use-points'];
-        }
-
-        if (quantityIncludeZero) {
-          chart.line1.forceY([0]);
-        }
-        else {
-          chart.line1.forceY([]);
-        }
-
-        if (priceIncludeZero) {
-          chart.line2.forceY([0]);
-        }
-        else {
-          chart.line2.forceY([]);
-        }
-
-        if (quantityHighlight) {
-          dataList[0]['stroke-width'] = "8px";
-        }
-        else {
-          delete dataList[0]['stroke-width'];
-        }
-        if (priceHighlight) {
-          dataList[1]['stroke-width'] = "8px";
-        }
-        else {
-          delete dataList[1]['stroke-width'];
-        }
-
-        $('#chart1 svg').empty();
-
-        d3.select('#chart1 svg')
-            .datum(dataList)
-            .transition()
-            .duration(500)
-            .call(chart);
-
-        nv.utils.windowResize(chart.update);
-
-        return chart;
-      });
     }
   });
+
+  $("#quantityPlotMode").on("change", function (e) {
+    quantityPlotMode = $('#quantityPlotMode').val();
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#costPlotMode").on("change", function (e) {
+    costPlotMode = $('#costPlotMode').val();
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#quantityIncludeZero").on("change", function (e) {
+    quantityIncludeZero = $('#quantityIncludeZero').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#priceIncludeZero").on("change", function (e) {
+    priceIncludeZero = $('#priceIncludeZero').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#costIncludeZero").on("change", function (e) {
+    costIncludeZero = $('#costIncludeZero').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#quantityHighlight").on("change", function (e) {
+    quantityHighlight = $('#quantityHighlight').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#priceHighlight").on("change", function (e) {
+    priceHighlight = $('#priceHighlight').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#costHighlight").on("change", function (e) {
+    costHighlight = $('#costHighlight').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  d3.json("data.json", function (error, data) {
+    dataList = data;
+    redraw();
+  });
+
+  function redraw() {
+    var minValue1 = Number.MAX_VALUE;
+    var maxValue1 = Number.MIN_VALUE;
+    var minValue2 = Number.MAX_VALUE;
+    var maxValue2 = Number.MIN_VALUE;
+    var minValue3 = Number.MAX_VALUE;
+    var maxValue3 = Number.MIN_VALUE;
+
+    dataList.forEach(function (data) {
+      var axis = data.axis;
+      data.values.forEach(function (valuePair) {
+        var value = valuePair[1];
+
+        if (axis == 3) {
+          minValue3 = Math.min(value, minValue3);
+          maxValue3 = Math.max(value, maxValue3);
+        }
+        else if (axis == 2) {
+          minValue2 = Math.min(value, minValue2);
+          maxValue2 = Math.max(value, maxValue2);
+        }
+        else {
+          minValue1 = Math.min(value, minValue1);
+          maxValue1 = Math.max(value, maxValue1);
+        }
+      });
+    });
+
+    var leftFormat = d3.format(',f');
+    var rightFormat = function (d) {
+      return '$' + d3.format(',f')(d)
+    };
+
+    var leftMargin = 70;
+    var rightMargin = 50;
+
+    var minValue1StrLen = leftFormat(minValue1).length;
+    var maxValue1StrLen = leftFormat(maxValue1).length;
+    var minValue2StrLen = rightFormat(minValue2).length;
+    var maxValue2StrLen = rightFormat(maxValue2).length;
+    var minValue3StrLen = rightFormat(minValue3).length;
+    var maxValue3StrLen = rightFormat(maxValue3).length;
+
+    // The "* 8" approximates the text width of the string
+    leftMargin = Math.max(70, minValue1StrLen * 8, maxValue1StrLen * 8);
+    rightMargin = Math.max(70, minValue2StrLen * 8, maxValue2StrLen * 8);
+
+    nv.addGraph(function () {
+      // Use the extended chart code
+      var chart = nv.models.multiLineChart()
+          .margin({top: 30, right: rightMargin, bottom: 50, left: leftMargin})
+          .x(function (d, i) {
+            return i
+          })
+          .y(function (d) {
+            return d[1]
+          })
+          .color(d3.scale.category10().range());
+
+      chart.xAxis
+          .showMaxMin(false)
+          .tickFormat(function (d) {
+            var dx = dataList[0].values[d] && dataList[0].values[d][0] || 0;
+            return d3.time.format('%x')(new Date(dx))
+          });
+
+      chart.y1Axis.tickFormat(leftFormat);
+      chart.y2Axis.tickFormat(rightFormat);
+      chart.y3Axis.tickFormat(rightFormat);
+
+      if (quantityPlotMode == "points") {
+        dataList[0]['use-points'] = true;
+      }
+      else {
+        delete dataList[0]['use-points'];
+      }
+
+      if (pricePlotMode == "points") {
+        dataList[1]['use-points'] = true;
+      }
+      else {
+        delete dataList[1]['use-points'];
+      }
+
+      if (costPlotMode == "points") {
+        dataList[2]['use-points'] = true;
+      }
+      else {
+        delete dataList[2]['use-points'];
+      }
+
+      if (quantityIncludeZero) {
+        chart.line1.forceY([0]);
+      }
+      else {
+        chart.line1.forceY([]);
+      }
+
+      if (priceIncludeZero) {
+        chart.line2.forceY([0]);
+      }
+      else {
+        chart.line2.forceY([]);
+      }
+
+      if (costIncludeZero) {
+        chart.line3.forceY([0]);
+      }
+      else {
+        chart.line3.forceY([]);
+      }
+
+      if (quantityHighlight) {
+        dataList[0]['stroke-width'] = "8px";
+      }
+      else {
+        delete dataList[0]['stroke-width'];
+      }
+
+      if (priceHighlight) {
+        dataList[1]['stroke-width'] = "8px";
+      }
+      else {
+        delete dataList[1]['stroke-width'];
+      }
+
+      if (costHighlight) {
+        dataList[2]['stroke-width'] = "8px";
+      }
+      else {
+        delete dataList[2]['stroke-width'];
+      }
+
+      $('#chart1 svg').empty();
+
+      d3.select('#chart1 svg')
+          .datum(dataList)
+          .transition()
+          .duration(500)
+          .call(chart);
+
+      nv.utils.windowResize(chart.update);
+
+      return chart;
+    });
+  }
+});
 </script>
 </body>
 </html>
