@@ -64,7 +64,7 @@
       var left = e.pos[0] + ( offsetElement.offsetLeft || 0 ),
         top = e.pos[1] + ( offsetElement.offsetTop || 0),
         x = xAxis.tickFormat()(line1.x()(e.point, e.pointIndex)),
-        y = (e.series.bar ? y1Axis : y2Axis).tickFormat()(line1.y()(e.point, e.pointIndex)),
+        y = ((e.series.axis == 1) ? y1Axis : y2Axis).tickFormat()(line1.y()(e.point, e.pointIndex)),
         content = tooltip(e.series.key, x, y, e, chart);
 
       nv.tooltip.show([left, top], content, e.value < 0 ? 'n' : 's', null, offsetElement);
@@ -141,8 +141,6 @@
 
         x = dataLines1.filter(function (d) {
           return !d.disabled;
-        }).length && dataLines2.filter(function (d) {
-          return !d.disabled;
         }).length ? line1.xScale() : line2.xScale();
         y1 = line1.yScale();
         y2 = line2.yScale();
@@ -215,7 +213,7 @@
             }))
 
         var line1Wrap = g.select('.nv-line1Wrap')
-          .datum(dataLines1.length ? dataLines1 : [
+          .datum(dataLines1 && !dataLines1.disabled ? dataLines1 : [
             {values: []}
           ])
 
@@ -281,7 +279,6 @@
 
         // Update chart from a state object passed to event handler
         dispatch.on('changeState', function (e) {
-
           if (typeof e.disabled !== 'undefined') {
             data.forEach(function (series, i) {
               series.disabled = e.disabled[i];
@@ -341,9 +338,9 @@
     chart.y1Axis = y1Axis;
     chart.y2Axis = y2Axis;
 
-    d3.rebind(chart, line1, 'defined', 'size', 'clipVoronoi', 'interpolate');
-    //TODO: consider rebinding x, y and some other stuff, and simply do soemthign lile bars.x(lines.x()), etc.
-    //d3.rebind(chart, lines, 'x', 'y', 'size', 'xDomain', 'yDomain', 'xRange', 'yRange', 'forceX', 'forceY', 'interactive', 'clipEdge', 'clipVoronoi', 'id');
+    d3.rebind(chart, line1, 'defined', 'size', 'interpolate');
+    //TODO: consider rebinding x, y and some other stuff
+    //d3.rebind(chart, lines, 'x', 'y', 'size', 'xDomain', 'yDomain', 'xRange', 'yRange', 'forceX', 'forceY', 'interactive', 'clipEdge', 'id');
 
     chart.options = nv.utils.optionsFunc.bind(chart);
 
