@@ -133,10 +133,10 @@
         // Setup Scales
 
         var dataLines1 = data.filter(function (d) {
-          return !d.disabled && d.axis == 1;
+          return d.axis == 1;
         });
         var dataLines2 = data.filter(function (d) {
-          return !d.disabled && d.axis == 2;
+          return d.axis == 2;
         });
 
         x = dataLines1.filter(function (d) {
