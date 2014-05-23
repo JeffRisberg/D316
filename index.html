@@ -20,31 +20,44 @@
   }
 </style>
 
-<select id="quantityPlotMode" name="quantityPlotMode">
-  <option value="smoothLine">Smooth Line</option>
-  <option value="points">Points</option>
-  <option value="bars">Bars</option>
-</select>
-
-<select id="pricePlotMode" name="pricePlotMode">
-  <option value="smoothLine">Smooth Line</option>
-  <option value="points">Points</option>
-  <option value="bars">Bars</option>
-</select>
-
-<select id="costPlotMode" name="costPlotMode">
-  <option value="smoothLine">Smooth Line</option>
-  <option value="points">Points</option>
-  <option value="bars">Bars</option>
-</select>
-
-<input type="checkbox" id="quantityIncludeZero">Quantity Include Zero
-<input type="checkbox" id="priceIncludeZero">Price Include Zero
-<input type="checkbox" id="costIncludeZero">Cost Include Zero
-
-<input type="checkbox" id="quantityHighlight">Quantity Highlight
-<input type="checkbox" id="priceHighlight">Price Highlight
-<input type="checkbox" id="costHighlight">Cost Highlight
+<table>
+  <tr>
+    <th style="text-align: right">Quantity:</th>
+    <td>
+      <select id="quantityPlotMode" name="quantityPlotMode">
+        <option value="smoothLine">Smooth Line</option>
+        <option value="points">Points</option>
+        <option value="bars">Bars</option>
+      </select>
+      <input type="checkbox" id="quantityHighlight">Highlight
+      <input type="checkbox" id="quantityIncludeZero">Include Zero
+    </td>
+  </tr>
+  <tr>
+    <th style="text-align: right">Price:</th>
+    <td>
+      <select id="pricePlotMode" name="pricePlotMode">
+        <option value="smoothLine">Smooth Line</option>
+        <option value="points">Points</option>
+        <option value="bars">Bars</option>
+      </select>
+      <input type="checkbox" id="priceHighlight">Highlight
+      <input type="checkbox" id="priceIncludeZero">Include Zero
+    </td>
+  </tr>
+  <tr>
+    <th style="text-align: right">Cost:</th>
+    <td>
+      <select id="costPlotMode" name="costPlotMode">
+        <option value="smoothLine">Smooth Line</option>
+        <option value="points">Points</option>
+        <option value="bars">Bars</option>
+      </select>
+      <input type="checkbox" id="costHighlight">Highlight
+      <input type="checkbox" id="costIncludeZero">Include Zero
+    </td>
+  </tr>
+</table>
 
 <div id="chart1">
   <svg></svg>
