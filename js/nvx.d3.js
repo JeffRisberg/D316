@@ -1,3 +1,10 @@
+/**
+ * The ndx.d3.js file contains extensions for nv3d.  The current extension is a multiple line chart,
+ * where the line chart can have 1, 2, or 3 yAxes.
+ *
+ * @author Jeff, Spoorthy
+ * @since May 2014
+ */
 (function () {
 
   nv.models.multiLineChart = function () {
