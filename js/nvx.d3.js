@@ -150,8 +150,8 @@
         //------------------------------------------------------------
         // Setup containers and skeleton of chart
 
-        var wrap = d3.select(this).selectAll('g.nv-wrap.nv-linePlusBar').data([data]);
-        var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-linePlusBar').append('g');
+        var wrap = d3.select(this).selectAll('g.nv-wrap.nv-multiLine').data([data]);
+        var gEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-multiLine').append('g');
         var g = wrap.select('g');
 
         gEnter.append('g').attr('class', 'nv-x nv-axis');
