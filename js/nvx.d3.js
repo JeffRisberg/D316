@@ -55,6 +55,9 @@
     line2
       .clipEdge(false)
       .padData(true);
+    line3
+      .clipEdge(false)
+      .padData(true);
     xAxis
       .orient('bottom')
       .tickPadding(7)
