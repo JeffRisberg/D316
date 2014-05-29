@@ -15,8 +15,8 @@
 
 <style>
   #chart1 svg {
-    height: 350px;
-    width: 600px;
+    height: 100%;
+    width: 100%;
   }
 </style>
 
@@ -154,6 +154,19 @@ $(document).ready(function () {
     redraw();
   });
 
+  function updateSize() {
+    var width = $(window).width();
+    var height = $(window).height();
+
+    $('#chart1').width(width - 20);
+    $('#chart1').height(height - 130);
+  }
+
+  $(window).resize(function () {
+    updateSize();
+  });
+  updateSize();
+
   function redraw() {
     var minValue1 = Number.MAX_VALUE;
     var maxValue1 = Number.MIN_VALUE;
@@ -165,7 +178,7 @@ $(document).ready(function () {
     dataList.forEach(function (data) {
       var axis = data.axis;
       data.values.forEach(function (valuePair) {
-        var value = valuePair[1];
+        var value = valuePair.y;
 
         if (axis == 3) {
           minValue3 = Math.min(value, minValue3);
@@ -209,15 +222,15 @@ $(document).ready(function () {
             return i
           })
           .y(function (d) {
-            return d[1]
+            return d.y
           })
           .color(d3.scale.category10().range());
 
       chart.xAxis
           .showMaxMin(false)
           .tickFormat(function (d) {
-            var dx = dataList[0].values[d] && dataList[0].values[d][0] || 0;
-            return d3.time.format('%x')(new Date(dx))
+            var dx = dataList[0].values[d] && dataList[0].values[d].x || 0;
+            return dx;
           });
 
       chart.y1Axis.tickFormat(leftFormat);

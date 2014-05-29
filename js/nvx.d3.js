@@ -7,15 +7,278 @@
  */
 (function () {
 
+  nv.models.revisedLine = function () {
+    "use strict";
+    //============================================================
+    // Public Variables with Default Settings
+    //------------------------------------------------------------
+
+    var scatter = nv.models.scatter()
+      ;
+
+    var margin = {top: 0, right: 0, bottom: 0, left: 0}
+      , width = 960
+      , height = 500
+      , color = nv.utils.defaultColor() // a function that returns a color
+      , getX = function (d) {
+        return d.x
+      } // accessor to get the x value from a data point
+      , getY = function (d) {
+        return d.y
+      } // accessor to get the y value from a data point
+      , defined = function (d, i) {
+        return !isNaN(getY(d, i)) && getY(d, i) !== null
+      } // allows a line to be not continuous when it is not defined
+      , isArea = function (d) {
+        return d.area
+      } // decides if a line is an area or just a line
+      , clipEdge = false // if true, masks lines within x and y scale
+      , x //can be accessed via chart.xScale()
+      , y //can be accessed via chart.yScale()
+      , interpolate = "linear" // controls the line interpolation
+      ;
+
+    scatter
+      .size(16) // default size
+      .sizeDomain([16, 256]) //set to speed up calculation, needs to be unset if there is a custom size accessor
+    ;
+    scatter.useVoronoi(false);
+
+    //============================================================
+
+    //============================================================
+    // Private Variables
+    //------------------------------------------------------------
+
+    //============================================================
+
+    function chart(selection) {
+      selection.each(function (data) {
+        var availableWidth = width - margin.left - margin.right,
+          availableHeight = height - margin.top - margin.bottom,
+          container = d3.select(this);
+
+        //------------------------------------------------------------
+        // Setup Scales
+
+        x = scatter.xScale();
+        y = scatter.yScale();
+
+        //------------------------------------------------------------
+
+        //------------------------------------------------------------
+        // Setup containers and skeleton of chart
+
+        var wrap = container.selectAll('g.nv-wrap.nv-line').data([data]);
+        var wrapEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-line');
+        var defsEnter = wrapEnter.append('defs');
+        var gEnter = wrapEnter.append('g');
+        var g = wrap.select('g')
+
+        gEnter.append('g').attr('class', 'nv-groups');
+        gEnter.append('g').attr('class', 'nv-scatterWrap');
+
+        wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+        //------------------------------------------------------------
+
+        scatter
+          .width(availableWidth)
+          .height(availableHeight);
+
+        var scatterWrap = wrap.select('.nv-scatterWrap');
+
+        scatterWrap.transition().call(scatter);
+
+        defsEnter.append('clipPath')
+          .attr('id', 'nv-edge-clip-' + scatter.id())
+          .append('rect');
+
+        wrap.select('#nv-edge-clip-' + scatter.id() + ' rect')
+          .attr('width', availableWidth)
+          .attr('height', (availableHeight > 0) ? availableHeight : 0);
+
+        g.attr('clip-path', clipEdge ? 'url(#nv-edge-clip-' + scatter.id() + ')' : '');
+        scatterWrap
+          .attr('clip-path', clipEdge ? 'url(#nv-edge-clip-' + scatter.id() + ')' : '');
+
+        var groups = wrap.select('.nv-groups').selectAll('.nv-group')
+          .data(function (d) {
+            return d
+          }, function (d) {
+            return d.key
+          });
+        groups.enter().append('g')
+          .style('stroke-opacity', 1e-6)
+          .style('fill-opacity', 1e-6);
+
+        groups.exit().remove();
+
+        groups
+          .attr('class', function (d, i) {
+            return 'nv-group nv-series-' + i
+          })
+          .classed('hover', function (d) {
+            return d.hover
+          })
+          .style('fill', function (d, i) {
+            return color(d, i)
+          })
+          .style('stroke', function (d, i) {
+            return color(d, i)
+          });
+        groups
+          .transition()
+          .style('stroke-opacity', 1)
+          .style('fill-opacity', .5);
+
+        var linePaths = groups.selectAll('path.nv-line')
+          .data(function (d) {
+            return [d]
+          });
+
+        linePaths.enter().append('path')
+          .attr('class', 'nv-line')
+          .style('stroke-width', function (d) {
+            if (d['stroke-width']) return d['stroke-width'];
+          })
+          .attr('d', function (d) {
+            if (d['use-points'] == null) {
+              return d3.svg.line()
+                .interpolate(interpolate)
+                .defined(defined)
+                .x(function (d, i) {
+                  return nv.utils.NaNtoZero(x(getX(d, i)))
+                })
+                .y(function (d, i) {
+                  return nv.utils.NaNtoZero(y(getY(d, i)))
+                })
+                .apply(this, [d.values])
+            }
+          });
+
+        linePaths.enter().append('path')
+          .attr('class', 'nv-line')
+          .style("stroke-dasharray",
+          function (d) {
+            return d['stroke-width'] ? (d['stroke-width'], 10) : ("4, 10");
+          })
+          .style('stroke-width',
+          function (d) {
+            return d['stroke-width'] ? d['stroke-width'] : 4;
+          })
+          .attr('d', function (d) {
+            if (d['use-points'] != null) {
+              return d3.svg.line()
+                .x(function (d, i) {
+                  return nv.utils.NaNtoZero(x(getX(d, i)))
+                })
+                .y(function (d, i) {
+                  return nv.utils.NaNtoZero(y(getY(d, i)))
+                })
+                .apply(this, [d.values])
+            }
+          });
+      });
+
+      return chart;
+    }
+
+    //============================================================
+    // Expose Public Variables
+    //------------------------------------------------------------
+
+    chart.dispatch = scatter.dispatch;
+    chart.scatter = scatter;
+
+    d3.rebind(chart, scatter, 'id', 'interactive', 'size', 'xScale', 'yScale', 'zScale', 'xDomain', 'yDomain', 'xRange', 'yRange',
+      'sizeDomain', 'forceX', 'forceY', 'forceSize', 'padData');
+
+    chart.options = nv.utils.optionsFunc.bind(chart);
+
+    chart.margin = function (_) {
+      if (!arguments.length) return margin;
+      margin.top = typeof _.top != 'undefined' ? _.top : margin.top;
+      margin.right = typeof _.right != 'undefined' ? _.right : margin.right;
+      margin.bottom = typeof _.bottom != 'undefined' ? _.bottom : margin.bottom;
+      margin.left = typeof _.left != 'undefined' ? _.left : margin.left;
+      return chart;
+    };
+
+    chart.width = function (_) {
+      if (!arguments.length) return width;
+      width = _;
+      return chart;
+    };
+
+    chart.height = function (_) {
+      if (!arguments.length) return height;
+      height = _;
+      return chart;
+    };
+
+    chart.x = function (_) {
+      if (!arguments.length) return getX;
+      getX = _;
+      scatter.x(_);
+      return chart;
+    };
+
+    chart.y = function (_) {
+      if (!arguments.length) return getY;
+      getY = _;
+      scatter.y(_);
+      return chart;
+    };
+
+    chart.clipEdge = function (_) {
+      if (!arguments.length) return clipEdge;
+      clipEdge = _;
+      return chart;
+    };
+
+    chart.color = function (_) {
+      if (!arguments.length) return color;
+      color = nv.utils.getColor(_);
+      scatter.color(color);
+      return chart;
+    };
+
+    chart.interpolate = function (_) {
+      if (!arguments.length) return interpolate;
+      interpolate = _;
+      return chart;
+    };
+
+    chart.defined = function (_) {
+      if (!arguments.length) return defined;
+      defined = _;
+      return chart;
+    };
+
+    chart.isArea = function (_) {
+      if (!arguments.length) return isArea;
+      isArea = d3.functor(_);
+      return chart;
+    };
+
+    //============================================================
+
+    return chart;
+  }
+
   nv.models.multiLineChart = function () {
     "use strict";
     //============================================================
     // Public Variables with Default Settings
     //------------------------------------------------------------
 
-    var line1 = nv.models.line()
-      , line2 = nv.models.line()
-      , line3 = nv.models.line()
+    var line1 = nv.models.revisedLine()
+      , line2 = nv.models.revisedLine()
+      , line3 = nv.models.revisedLine()
+      , bar1 = nv.models.historicalBar()
+      , bar2 = nv.models.historicalBar()
+      , bar3 = nv.models.historicalBar()
       , xAxis = nv.models.axis()
       , y1Axis = nv.models.axis()
       , y2Axis = nv.models.axis()
@@ -43,6 +306,9 @@
       , y1
       , y2
       , y3
+      , yb1
+      , yb2
+      , yb3
       , state = {}
       , defaultState = null
       , noData = "No Data Available."
@@ -56,6 +322,15 @@
       .clipEdge(false)
       .padData(true);
     line3
+      .clipEdge(false)
+      .padData(true);
+    bar1
+      .clipEdge(false)
+      .padData(true);
+    bar2
+      .clipEdge(false)
+      .padData(true);
+    bar3
       .clipEdge(false)
       .padData(true);
     xAxis
@@ -157,6 +432,15 @@
         var dataLines3 = data.filter(function (d) {
           return d.axis == 3;
         });
+        var dataBars1 = data.filter(function (d) {
+          return d.axis == 1;
+        });
+        var dataBars2 = data.filter(function (d) {
+          return d.axis == 2;
+        });
+        var dataBars3 = data.filter(function (d) {
+          return d.axis == 3;
+        });
         var tripleAxis = dataLines3.length > 0;
 
         x = dataLines1.filter(function (d) {
@@ -165,6 +449,9 @@
         y1 = line1.yScale();
         y2 = line2.yScale();
         y3 = line3.yScale();
+        yb1 = bar1.yScale();
+        yb2 = bar2.yScale();
+        yb3 = bar3.yScale();
 
         //------------------------------------------------------------
 
@@ -182,6 +469,9 @@
         gEnter.append('g').attr('class', 'nv-line1Wrap');
         gEnter.append('g').attr('class', 'nv-line2Wrap');
         gEnter.append('g').attr('class', 'nv-line3Wrap');
+        gEnter.append('g').attr('class', 'nv-bar1Wrap');
+        gEnter.append('g').attr('class', 'nv-bar2Wrap');
+        gEnter.append('g').attr('class', 'nv-bar3Wrap');
         gEnter.append('g').attr('class', 'nv-legendWrap');
 
         //------------------------------------------------------------
@@ -215,7 +505,7 @@
           }
 
           g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + ( availableWidth / 10 ) + ',' + (-margin.top) + ')');
+            .attr('transform', 'translate(' + (-0.10 * availableWidth) + ',' + (-margin.top) + ')');
         }
 
         //------------------------------------------------------------
@@ -223,7 +513,36 @@
         wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
         //------------------------------------------------------------
-        // Main Chart Component(s)
+        // Configure Axes and their Scales
+
+        xAxis
+          .scale(x)
+          .ticks(availableWidth / 100)
+          .tickSize(-availableHeight, 0);
+
+        y1Axis
+          .scale(y1)
+          .ticks(availableHeight / 36)
+          .tickSize(-availableWidth, 0);
+
+        y2Axis
+          .scale(y2)
+          .ticks(availableHeight / 36)
+          .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y2 rules only if y1 has none
+
+        y3Axis
+          .scale(y3)
+          .ticks(availableHeight / 36)
+          .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y3 rules only if y1 has none
+
+        if (false) {
+          y1Axis.scale(yb1);
+          y2Axis.scale(yb2);
+          y3Axis.scale(yb3);
+        }
+
+        //------------------------------------------------------------
+        // Draw lines and/or bars
 
         line1
           .width(availableWidth)
@@ -252,34 +571,77 @@
               return !data[i].disabled && (data[i].axis == 3);
             }))
 
+        bar1
+          .width(availableWidth)
+          .height(availableHeight)
+          .color(data.map(function (d, i) {
+            return d.color || color(d, i);
+          }).filter(function (d, i) {
+              return !data[i].disabled && (data[i].axis == 1);
+            }))
+
+        bar2
+          .width(availableWidth)
+          .height(availableHeight)
+          .color(data.map(function (d, i) {
+            return d.color || color(d, i);
+          }).filter(function (d, i) {
+              return !data[i].disabled && (data[i].axis == 2);
+            }))
+
+        bar3
+          .width(availableWidth)
+          .height(availableHeight)
+          .color(data.map(function (d, i) {
+            return d.color || color(d, i);
+          }).filter(function (d, i) {
+              return !data[i].disabled && (data[i].axis == 3);
+            }))
+
         var line1Wrap = g.select('.nv-line1Wrap')
           .datum(dataLines1 && !dataLines1.disabled ? dataLines1 : [
             {values: []}
           ])
+        g.selectAll(".nv-line1Wrap .nv-line").remove();
 
         var line2Wrap = g.select('.nv-line2Wrap')
           .datum(dataLines2 && !dataLines2.disabled ? dataLines2 : [
             {values: []}
           ]);
+        g.selectAll(".nv-line2Wrap .nv-line").remove();
 
         var line3Wrap = g.select('.nv-line3Wrap')
           .datum(dataLines3 && !dataLines3.disabled ? dataLines3 : [
             {values: []}
           ]);
+        g.selectAll(".nv-line3Wrap .nv-line").remove();
+
+        if (false) {
+          var bar1Wrap = g.select('.nv-bar1Wrap')
+            .datum(dataBars1 && !dataLines1.disabled ? dataBars1 : [
+              {values: []}
+            ])
+
+          var bar2Wrap = g.select('.nv-bar2Wrap')
+            .datum(dataBars2 && !dataBars2.disabled ? dataBars2 : [
+              {values: []}
+            ]);
+
+          var bar3Wrap = g.select('.nv-bar3Wrap')
+            .datum(dataBars3 && !dataBars3.disabled ? dataBars3 : [
+              {values: []}
+            ]);
+        }
 
         d3.transition(line1Wrap).call(line1);
         d3.transition(line2Wrap).call(line2);
         d3.transition(line3Wrap).call(line3);
+        //d3.transition(bar1Wrap).call(bar1);
+        //d3.transition(bar2Wrap).call(bar2);
+        //d3.transition(bar3Wrap).call(bar3);
 
         //------------------------------------------------------------
-
-        //------------------------------------------------------------
-        // Setup Axes
-
-        xAxis
-          .scale(x)
-          .ticks(availableWidth / 100)
-          .tickSize(-availableHeight, 0);
+        // Draw Axes
 
         g.select('.nv-x.nv-axis')
           .attr('transform', 'translate(0,' + y1.range()[0] + ')');
@@ -287,19 +649,9 @@
         d3.transition(g.select('.nv-x.nv-axis'))
           .call(xAxis);
 
-        y1Axis
-          .scale(y1)
-          .ticks(availableHeight / 36)
-          .tickSize(-availableWidth, 0);
-
         d3.transition(g.select('.nv-y1.nv-axis'))
           .style('opacity', dataLines1.length ? 1 : 0)
           .call(y1Axis);
-
-        y2Axis
-          .scale(y2)
-          .ticks(availableHeight / 36)
-          .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y2 rules only if y1 has none
 
         g.select('.nv-y2.nv-axis')
           .style('opacity', dataLines2.length ? 1 : 0)
@@ -307,11 +659,6 @@
 
         d3.transition(g.select('.nv-y2.nv-axis'))
           .call(y2Axis);
-
-        y3Axis
-          .scale(y3)
-          .ticks(availableHeight / 36)
-          .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y3 rules only if y1 has none
 
         g.select('.nv-y3.nv-axis')
           .style('opacity', dataLines3.length ? 1 : 0)
