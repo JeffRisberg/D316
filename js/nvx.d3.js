@@ -29,9 +29,6 @@
       , defined = function (d, i) {
         return !isNaN(getY(d, i)) && getY(d, i) !== null
       } // allows a line to be not continuous when it is not defined
-      , isArea = function (d) {
-        return d.area
-      } // decides if a line is an area or just a line
       , clipEdge = false // if true, masks lines within x and y scale
       , x //can be accessed via chart.xScale()
       , y //can be accessed via chart.yScale()
@@ -183,7 +180,18 @@
           if (data[0]['use-bars'] != null) {
             var rectData = data[0].values;
             var minY = y.domain()[0];
-            var barWidth = 0.50 * availableWidth / rectData.length;
+            var groupWidth = 1.0 * availableWidth / rectData.length
+            var barIndex = data[0]['bar-index'] || 0;
+            var barCount = data[0]['bar-count'] || 1;
+            var barWidth = [0, 0.50, 0.37, 0.28][barCount] * groupWidth;
+            var barOffset = 0;
+
+            if (barCount == 2) {
+              barOffset = [-1, 1][barIndex] * barWidth / 2;
+            }
+            else if (barCount == 3) {
+              barOffset = [-2, 0, 2][barIndex] * barWidth / 2;
+            }
 
             var rects = groups.selectAll('path.nv-rect')
               .data(rectData)
@@ -191,8 +199,9 @@
 
             rects.append('rect')
               .attr('class', 'nv-rect')
+              .style('stroke-width', data[0]['stroke-width'] ? 4 : 1)
               .attr('x', function (d, i) {
-                return nv.utils.NaNtoZero(x(getX(d, i)) - barWidth / 2);
+                return nv.utils.NaNtoZero(x(getX(d, i)) + barOffset - barWidth / 2);
               })
               .attr('y', function (d, i) {
                 return nv.utils.NaNtoZero(y(getY(d, i)));
@@ -277,12 +286,6 @@
     chart.defined = function (_) {
       if (!arguments.length) return defined;
       defined = _;
-      return chart;
-    };
-
-    chart.isArea = function (_) {
-      if (!arguments.length) return isArea;
-      isArea = d3.functor(_);
       return chart;
     };
 
@@ -531,6 +534,25 @@
 
         //------------------------------------------------------------
         // Draw lines and/or bars
+
+        var barCount = 0;
+        data.forEach(function (d) {
+          if (!d.disabled && d.axis == 1 && d['use-bars']) {
+            d['bar-index'] = barCount;
+            barCount++;
+          }
+          if (!d.disabled && d.axis == 2 && d['use-bars']) {
+            d['bar-index'] = barCount;
+            barCount++;
+          }
+          if (!d.disabled && d.axis == 3 && d['use-bars']) {
+            d['bar-index'] = barCount;
+            barCount++;
+          }
+        });
+        data.forEach(function (d) {
+          d['bar-count'] = barCount;
+        });
 
         line1
           .width(availableWidth)
