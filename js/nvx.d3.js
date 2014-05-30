@@ -177,7 +177,7 @@
               }
             });
 
-          if (data[0]['use-bars'] != null) {
+          if (data[0]['use-bars'] != null && !data[0].disabled) {
             var rectData = data[0].values;
             var minY = y.domain()[0];
             var groupWidth = 1.0 * availableWidth / rectData.length
