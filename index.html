@@ -22,39 +22,56 @@
 
 <table>
   <tr>
-    <th style="text-align: right">Quantity:</th>
+    <td style="font-weight: bold">Quantity:</td>
+    <td style="font-weight: bold">Price:</td>
+    <td style="font-weight: bold">Cost:</td>
+  </tr>
+  <tr>
     <td>
       <select id="quantityPlotMode" name="quantityPlotMode">
         <option value="smoothLine">Smooth Line</option>
         <option value="points">Points</option>
         <option value="bars">Bars</option>
       </select>
-      <input type="checkbox" id="quantityHighlight">Highlight
-      <input type="checkbox" id="quantityIncludeZero">Include Zero
     </td>
-  </tr>
-  <tr>
-    <th style="text-align: right">Price:</th>
     <td>
       <select id="pricePlotMode" name="pricePlotMode">
         <option value="smoothLine">Smooth Line</option>
         <option value="points">Points</option>
         <option value="bars">Bars</option>
       </select>
-      <input type="checkbox" id="priceHighlight">Highlight
-      <input type="checkbox" id="priceIncludeZero">Include Zero
     </td>
-  </tr>
-  <tr>
-    <th style="text-align: right">Cost:</th>
     <td>
       <select id="costPlotMode" name="costPlotMode">
         <option value="smoothLine">Smooth Line</option>
         <option value="points">Points</option>
         <option value="bars">Bars</option>
       </select>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <input type="checkbox" id="quantityHighlight">Highlight
+    </td>
+    <td>
+      <input type="checkbox" id="priceHighlight">Highlight
+    </td>
+    <td>
       <input type="checkbox" id="costHighlight">Highlight
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <input type="checkbox" id="quantityIncludeZero">Include Zero
+    </td>
+    <td>
+      <input type="checkbox" id="priceIncludeZero">Include Zero
+    </td>
+    <td>
       <input type="checkbox" id="costIncludeZero">Include Zero
+    </td>
+    <td>
+      <input type="checkbox" id="useSameAxis">Use Same Axis
     </td>
   </tr>
 </table>
@@ -69,12 +86,13 @@ $(document).ready(function () {
   var quantityPlotMode = "smoothLine";
   var pricePlotMode = "smoothLine";
   var costPlotMode = "smoothLine";
-  var quantityIncludeZero = false;
-  var priceIncludeZero = false;
-  var costIncludeZero = false;
   var quantityHighlight = false;
   var priceHighlight = false;
   var costHighlight = false;
+  var quantityIncludeZero = false;
+  var priceIncludeZero = false;
+  var costIncludeZero = false;
+  var useSameAxis = false;
   var dataList = [];
 
   $("#pricePlotMode").on("change", function (e) {
@@ -95,6 +113,30 @@ $(document).ready(function () {
 
   $("#costPlotMode").on("change", function (e) {
     costPlotMode = $('#costPlotMode').val();
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#quantityHighlight").on("change", function (e) {
+    quantityHighlight = $('#quantityHighlight').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#priceHighlight").on("change", function (e) {
+    priceHighlight = $('#priceHighlight').is(':checked');
+
+    if (dataList.length > 0) {
+      redraw();
+    }
+  });
+
+  $("#costHighlight").on("change", function (e) {
+    costHighlight = $('#costHighlight').is(':checked');
 
     if (dataList.length > 0) {
       redraw();
@@ -125,24 +167,8 @@ $(document).ready(function () {
     }
   });
 
-  $("#quantityHighlight").on("change", function (e) {
-    quantityHighlight = $('#quantityHighlight').is(':checked');
-
-    if (dataList.length > 0) {
-      redraw();
-    }
-  });
-
-  $("#priceHighlight").on("change", function (e) {
-    priceHighlight = $('#priceHighlight').is(':checked');
-
-    if (dataList.length > 0) {
-      redraw();
-    }
-  });
-
-  $("#costHighlight").on("change", function (e) {
-    costHighlight = $('#costHighlight').is(':checked');
+  $("#useSameAxis").on("change", function (e) {
+    useSameAxis = $('#useSameAxis').is(':checked');
 
     if (dataList.length > 0) {
       redraw();
@@ -175,6 +201,12 @@ $(document).ready(function () {
     var minValue3 = Number.MAX_VALUE;
     var maxValue3 = Number.MIN_VALUE;
 
+    if (useSameAxis) {
+      dataList[2]['axis'] = 2;
+    }
+    else {
+      dataList[2]['axis'] = 3;
+    }
     dataList.forEach(function (data) {
       var axis = data.axis;
       data.values.forEach(function (valuePair) {

@@ -2,7 +2,7 @@
  * The ndx.d3.js file contains extensions for nv3d.  The current extension is a multiple line chart,
  * where the line chart can have 1, 2, or 3 yAxes.
  *
- * @author Jeff, Spoorthy
+ * @author Jeff Risberg, Spoorthy Ananthaiath
  * @since May 2014
  */
 (function () {
@@ -177,40 +177,45 @@
               }
             });
 
-          if (data[0]['use-bars'] != null && !data[0].disabled) {
-            var rectData = data[0].values;
-            var minY = y.domain()[0];
-            var groupWidth = 1.0 * availableWidth / rectData.length
-            var barIndex = data[0]['bar-index'] || 0;
-            var barCount = data[0]['bar-count'] || 1;
-            var barWidth = [0, 0.50, 0.37, 0.28][barCount] * groupWidth;
-            var barOffset = 0;
+          data.forEach(function (d, dataIndex) {
+            if (d != null && d['use-bars'] != null && !d.disabled) {
+              var rectData = d.values;
+              var minY = y.domain()[0];
+              var groupWidth = 1.0 * availableWidth / rectData.length
+              var barIndex = d['bar-index'] || 0;
+              var barCount = d['bar-count'] || 1;
+              var barWidth = [0, 0.50, 0.37, 0.28][barCount] * groupWidth;
+              var barOffset = 0;
 
-            if (barCount == 2) {
-              barOffset = [-1, 1][barIndex] * barWidth / 2;
+              if (barCount == 2) {
+                barOffset = [-1, 1][barIndex] * barWidth / 2;
+              }
+              else if (barCount == 3) {
+                barOffset = [-2, 0, 2][barIndex] * barWidth / 2;
+              }
+
+              var rects = groups.selectAll('path.nv-rect')
+                .data(rectData)
+                .enter();
+
+              rects.append('rect')
+                .attr('class', 'nv-rect')
+                .style('stroke-width', data[0]['stroke-width'] ? 4 : 1)
+                .style('fill', function (d, i) {
+                  return color(d, dataIndex)
+                })
+                .attr('x', function (d, i) {
+                  return nv.utils.NaNtoZero(x(getX(d, i)) + barOffset - barWidth / 2);
+                })
+                .attr('y', function (d, i) {
+                  return nv.utils.NaNtoZero(y(getY(d, i)));
+                })
+                .attr('height', function (d, i) {
+                  return nv.utils.NaNtoZero(y(minY) - y(getY(d, i)))
+                })
+                .attr('width', barWidth)
             }
-            else if (barCount == 3) {
-              barOffset = [-2, 0, 2][barIndex] * barWidth / 2;
-            }
-
-            var rects = groups.selectAll('path.nv-rect')
-              .data(rectData)
-              .enter();
-
-            rects.append('rect')
-              .attr('class', 'nv-rect')
-              .style('stroke-width', data[0]['stroke-width'] ? 4 : 1)
-              .attr('x', function (d, i) {
-                return nv.utils.NaNtoZero(x(getX(d, i)) + barOffset - barWidth / 2);
-              })
-              .attr('y', function (d, i) {
-                return nv.utils.NaNtoZero(y(getY(d, i)));
-              })
-              .attr('height', function (d, i) {
-                return nv.utils.NaNtoZero(y(minY) - y(getY(d, i)))
-              })
-              .attr('width', barWidth)
-          }
+          });
         }
       );
 
