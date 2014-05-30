@@ -237,25 +237,31 @@ $(document).ready(function () {
       chart.y2Axis.tickFormat(rightFormat);
       chart.y3Axis.tickFormat(rightFormat);
 
+      delete dataList[0]['use-points'];
+      delete dataList[0]['use-bars'];
       if (quantityPlotMode == "points") {
         dataList[0]['use-points'] = true;
       }
-      else {
-        delete dataList[0]['use-points'];
+      else if (quantityPlotMode == "bars") {
+        dataList[0]['use-bars'] = true;
       }
 
+      delete dataList[1]['use-points'];
+      delete dataList[1]['use-bars'];
       if (pricePlotMode == "points") {
         dataList[1]['use-points'] = true;
       }
-      else {
-        delete dataList[1]['use-points'];
+      else if (pricePlotMode == "bars") {
+        dataList[1]['use-bars'] = true;
       }
 
+      delete dataList[2]['use-points'];
+      delete dataList[2]['use-bars'];
       if (costPlotMode == "points") {
         dataList[2]['use-points'] = true;
       }
-      else {
-        delete dataList[2]['use-points'];
+      else if (costPlotMode == "bars") {
+        dataList[2]['use-bars'] = true;
       }
 
       if (quantityIncludeZero) {

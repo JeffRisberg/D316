@@ -54,132 +54,156 @@
 
     function chart(selection) {
       selection.each(function (data) {
-        var availableWidth = width - margin.left - margin.right,
-          availableHeight = height - margin.top - margin.bottom,
-          container = d3.select(this);
+          var availableWidth = width - margin.left - margin.right,
+            availableHeight = height - margin.top - margin.bottom,
+            container = d3.select(this);
 
-        //------------------------------------------------------------
-        // Setup Scales
+          //------------------------------------------------------------
+          // Setup Scales
 
-        x = scatter.xScale();
-        y = scatter.yScale();
+          x = scatter.xScale();
+          y = scatter.yScale();
 
-        //------------------------------------------------------------
+          //------------------------------------------------------------
 
-        //------------------------------------------------------------
-        // Setup containers and skeleton of chart
+          //------------------------------------------------------------
+          // Setup containers and skeleton of chart
 
-        var wrap = container.selectAll('g.nv-wrap.nv-line').data([data]);
-        var wrapEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-line');
-        var defsEnter = wrapEnter.append('defs');
-        var gEnter = wrapEnter.append('g');
-        var g = wrap.select('g')
+          var wrap = container.selectAll('g.nv-wrap.nv-line').data([data]);
+          var wrapEnter = wrap.enter().append('g').attr('class', 'nvd3 nv-wrap nv-line');
+          var defsEnter = wrapEnter.append('defs');
+          var gEnter = wrapEnter.append('g');
+          var g = wrap.select('g')
 
-        gEnter.append('g').attr('class', 'nv-groups');
-        gEnter.append('g').attr('class', 'nv-scatterWrap');
+          gEnter.append('g').attr('class', 'nv-groups');
+          gEnter.append('g').attr('class', 'nv-scatterWrap');
 
-        wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+          wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
-        //------------------------------------------------------------
+          //------------------------------------------------------------
 
-        scatter
-          .width(availableWidth)
-          .height(availableHeight);
+          scatter
+            .width(availableWidth)
+            .height(availableHeight);
 
-        var scatterWrap = wrap.select('.nv-scatterWrap');
+          var scatterWrap = wrap.select('.nv-scatterWrap');
 
-        scatterWrap.transition().call(scatter);
+          scatterWrap.transition().call(scatter);
 
-        defsEnter.append('clipPath')
-          .attr('id', 'nv-edge-clip-' + scatter.id())
-          .append('rect');
+          defsEnter.append('clipPath')
+            .attr('id', 'nv-edge-clip-' + scatter.id())
+            .append('rect');
 
-        wrap.select('#nv-edge-clip-' + scatter.id() + ' rect')
-          .attr('width', availableWidth)
-          .attr('height', (availableHeight > 0) ? availableHeight : 0);
+          wrap.select('#nv-edge-clip-' + scatter.id() + ' rect')
+            .attr('width', availableWidth)
+            .attr('height', (availableHeight > 0) ? availableHeight : 0);
 
-        g.attr('clip-path', clipEdge ? 'url(#nv-edge-clip-' + scatter.id() + ')' : '');
-        scatterWrap
-          .attr('clip-path', clipEdge ? 'url(#nv-edge-clip-' + scatter.id() + ')' : '');
+          g.attr('clip-path', clipEdge ? 'url(#nv-edge-clip-' + scatter.id() + ')' : '');
+          scatterWrap
+            .attr('clip-path', clipEdge ? 'url(#nv-edge-clip-' + scatter.id() + ')' : '');
 
-        var groups = wrap.select('.nv-groups').selectAll('.nv-group')
-          .data(function (d) {
-            return d
-          }, function (d) {
-            return d.key
-          });
-        groups.enter().append('g')
-          .style('stroke-opacity', 1e-6)
-          .style('fill-opacity', 1e-6);
+          var groups = wrap.select('.nv-groups').selectAll('.nv-group')
+            .data(function (d) {
+              return d
+            }, function (d) {
+              return d.key
+            });
+          groups.enter().append('g')
+            .style('stroke-opacity', 1e-6)
+            .style('fill-opacity', 1e-6);
 
-        groups.exit().remove();
+          groups.exit().remove();
 
-        groups
-          .attr('class', function (d, i) {
-            return 'nv-group nv-series-' + i
-          })
-          .classed('hover', function (d) {
-            return d.hover
-          })
-          .style('fill', function (d, i) {
-            return color(d, i)
-          })
-          .style('stroke', function (d, i) {
-            return color(d, i)
-          });
-        groups
-          .transition()
-          .style('stroke-opacity', 1)
-          .style('fill-opacity', .5);
+          groups
+            .attr('class', function (d, i) {
+              return 'nv-group nv-series-' + i
+            })
+            .classed('hover', function (d) {
+              return d.hover
+            })
+            .style('fill', function (d, i) {
+              return color(d, i)
+            })
+            .style('stroke', function (d, i) {
+              return color(d, i)
+            });
+          groups
+            .transition()
+            .style('stroke-opacity', 1)
+            .style('fill-opacity', .5);
 
-        var linePaths = groups.selectAll('path.nv-line')
-          .data(function (d) {
-            return [d]
-          });
+          var linePaths = groups.selectAll('path.nv-line')
+            .data(function (d) {
+              return [d]
+            });
 
-        linePaths.enter().append('path')
-          .attr('class', 'nv-line')
-          .style('stroke-width', function (d) {
-            if (d['stroke-width']) return d['stroke-width'];
-          })
-          .attr('d', function (d) {
-            if (d['use-points'] == null) {
-              return d3.svg.line()
-                .interpolate(interpolate)
-                .defined(defined)
-                .x(function (d, i) {
-                  return nv.utils.NaNtoZero(x(getX(d, i)))
-                })
-                .y(function (d, i) {
-                  return nv.utils.NaNtoZero(y(getY(d, i)))
-                })
-                .apply(this, [d.values])
-            }
-          });
+          linePaths.enter().append('path')
+            .attr('class', 'nv-line')
+            .style('stroke-width', function (d) {
+              if (d['stroke-width']) return d['stroke-width'];
+            })
+            .attr('d', function (d) {
+              if (d['use-points'] == null && d['use-bars'] == null) {
+                return d3.svg.line()
+                  .interpolate(interpolate)
+                  .defined(defined)
+                  .x(function (d, i) {
+                    return nv.utils.NaNtoZero(x(getX(d, i)))
+                  })
+                  .y(function (d, i) {
+                    return nv.utils.NaNtoZero(y(getY(d, i)))
+                  })
+                  .apply(this, [d.values])
+              }
+            });
 
-        linePaths.enter().append('path')
-          .attr('class', 'nv-line')
-          .style("stroke-dasharray",
-          function (d) {
-            return d['stroke-width'] ? (d['stroke-width'], 10) : ("4, 10");
-          })
-          .style('stroke-width',
-          function (d) {
-            return d['stroke-width'] ? d['stroke-width'] : 4;
-          })
-          .attr('d', function (d) {
-            if (d['use-points'] != null) {
-              return d3.svg.line()
-                .x(function (d, i) {
-                  return nv.utils.NaNtoZero(x(getX(d, i)))
-                })
-                .y(function (d, i) {
-                  return nv.utils.NaNtoZero(y(getY(d, i)))
-                })
-                .apply(this, [d.values])
-            }
-          });
-      });
+          linePaths.enter().append('path')
+            .attr('class', 'nv-line')
+            .style("stroke-dasharray",
+            function (d) {
+              return d['stroke-width'] ? (d['stroke-width'], 10) : ("4, 10");
+            })
+            .style('stroke-width',
+            function (d) {
+              return d['stroke-width'] ? d['stroke-width'] : 4;
+            })
+            .attr('d', function (d) {
+              if (d['use-points'] != null) {
+                return d3.svg.line()
+                  .x(function (d, i) {
+                    return nv.utils.NaNtoZero(x(getX(d, i)))
+                  })
+                  .y(function (d, i) {
+                    return nv.utils.NaNtoZero(y(getY(d, i)))
+                  })
+                  .apply(this, [d.values])
+              }
+            });
+
+          if (data[0]['use-bars'] != null) {
+            var rectData = data[0].values;
+            var minY = y.domain()[0];
+            var barWidth = 0.50 * availableWidth / rectData.length;
+
+            var rects = groups.selectAll('path.nv-rect')
+              .data(rectData)
+              .enter();
+
+            rects.append('rect')
+              .attr('class', 'nv-rect')
+              .attr('x', function (d, i) {
+                return nv.utils.NaNtoZero(x(getX(d, i)) - barWidth / 2);
+              })
+              .attr('y', function (d, i) {
+                return nv.utils.NaNtoZero(y(getY(d, i)));
+              })
+              .attr('height', function (d, i) {
+                return nv.utils.NaNtoZero(y(minY) - y(getY(d, i)))
+              })
+              .attr('width', barWidth)
+          }
+        }
+      );
 
       return chart;
     }
@@ -276,9 +300,6 @@
     var line1 = nv.models.revisedLine()
       , line2 = nv.models.revisedLine()
       , line3 = nv.models.revisedLine()
-      , bar1 = nv.models.historicalBar()
-      , bar2 = nv.models.historicalBar()
-      , bar3 = nv.models.historicalBar()
       , xAxis = nv.models.axis()
       , y1Axis = nv.models.axis()
       , y2Axis = nv.models.axis()
@@ -306,9 +327,6 @@
       , y1
       , y2
       , y3
-      , yb1
-      , yb2
-      , yb3
       , state = {}
       , defaultState = null
       , noData = "No Data Available."
@@ -322,15 +340,6 @@
       .clipEdge(false)
       .padData(true);
     line3
-      .clipEdge(false)
-      .padData(true);
-    bar1
-      .clipEdge(false)
-      .padData(true);
-    bar2
-      .clipEdge(false)
-      .padData(true);
-    bar3
       .clipEdge(false)
       .padData(true);
     xAxis
@@ -432,15 +441,6 @@
         var dataLines3 = data.filter(function (d) {
           return d.axis == 3;
         });
-        var dataBars1 = data.filter(function (d) {
-          return d.axis == 1;
-        });
-        var dataBars2 = data.filter(function (d) {
-          return d.axis == 2;
-        });
-        var dataBars3 = data.filter(function (d) {
-          return d.axis == 3;
-        });
         var tripleAxis = dataLines3.length > 0;
 
         x = dataLines1.filter(function (d) {
@@ -449,9 +449,6 @@
         y1 = line1.yScale();
         y2 = line2.yScale();
         y3 = line3.yScale();
-        yb1 = bar1.yScale();
-        yb2 = bar2.yScale();
-        yb3 = bar3.yScale();
 
         //------------------------------------------------------------
 
@@ -469,9 +466,6 @@
         gEnter.append('g').attr('class', 'nv-line1Wrap');
         gEnter.append('g').attr('class', 'nv-line2Wrap');
         gEnter.append('g').attr('class', 'nv-line3Wrap');
-        gEnter.append('g').attr('class', 'nv-bar1Wrap');
-        gEnter.append('g').attr('class', 'nv-bar2Wrap');
-        gEnter.append('g').attr('class', 'nv-bar3Wrap');
         gEnter.append('g').attr('class', 'nv-legendWrap');
 
         //------------------------------------------------------------
@@ -535,12 +529,6 @@
           .ticks(availableHeight / 36)
           .tickSize(dataLines1.length ? 0 : -availableWidth, 0); // Show the y3 rules only if y1 has none
 
-        if (false) {
-          y1Axis.scale(yb1);
-          y2Axis.scale(yb2);
-          y3Axis.scale(yb3);
-        }
-
         //------------------------------------------------------------
         // Draw lines and/or bars
 
@@ -571,33 +559,6 @@
               return !data[i].disabled && (data[i].axis == 3);
             }))
 
-        bar1
-          .width(availableWidth)
-          .height(availableHeight)
-          .color(data.map(function (d, i) {
-            return d.color || color(d, i);
-          }).filter(function (d, i) {
-              return !data[i].disabled && (data[i].axis == 1);
-            }))
-
-        bar2
-          .width(availableWidth)
-          .height(availableHeight)
-          .color(data.map(function (d, i) {
-            return d.color || color(d, i);
-          }).filter(function (d, i) {
-              return !data[i].disabled && (data[i].axis == 2);
-            }))
-
-        bar3
-          .width(availableWidth)
-          .height(availableHeight)
-          .color(data.map(function (d, i) {
-            return d.color || color(d, i);
-          }).filter(function (d, i) {
-              return !data[i].disabled && (data[i].axis == 3);
-            }))
-
         var line1Wrap = g.select('.nv-line1Wrap')
           .datum(dataLines1 && !dataLines1.disabled ? dataLines1 : [
             {values: []}
@@ -616,29 +577,9 @@
           ]);
         g.selectAll(".nv-line3Wrap .nv-line").remove();
 
-        if (false) {
-          var bar1Wrap = g.select('.nv-bar1Wrap')
-            .datum(dataBars1 && !dataLines1.disabled ? dataBars1 : [
-              {values: []}
-            ])
-
-          var bar2Wrap = g.select('.nv-bar2Wrap')
-            .datum(dataBars2 && !dataBars2.disabled ? dataBars2 : [
-              {values: []}
-            ]);
-
-          var bar3Wrap = g.select('.nv-bar3Wrap')
-            .datum(dataBars3 && !dataBars3.disabled ? dataBars3 : [
-              {values: []}
-            ]);
-        }
-
         d3.transition(line1Wrap).call(line1);
         d3.transition(line2Wrap).call(line2);
         d3.transition(line3Wrap).call(line3);
-        //d3.transition(bar1Wrap).call(bar1);
-        //d3.transition(bar2Wrap).call(bar2);
-        //d3.transition(bar3Wrap).call(bar3);
 
         //------------------------------------------------------------
         // Draw Axes
@@ -847,4 +788,5 @@
 
     return chart;
   }
-})();
+})
+  ();
