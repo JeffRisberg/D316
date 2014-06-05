@@ -14,7 +14,7 @@
 <body>
 
 <style>
-  #chart1 svg {
+  #chart svg {
     height: 100%;
     width: 100%;
   }
@@ -76,8 +76,17 @@
   </tr>
 </table>
 
-<div id="chart1">
-  <svg></svg>
+<div id="frame" style="position: absolute; top: 120px; overflow: visible">
+  <div id="top"
+       style="position: absolute; top: 0px; height: 10px; width: 100%; background: blue; overflow: hidden">
+  </div>
+  <div id="chart" style="position: absolute;  top: 10px; background: #f8f8f8; overflow: visible">
+    <svg>
+    </svg>
+  </div>
+  <div id="bottom"
+       style="position: absolute; height: 10px; width: 100%; background: green; overflow: hidden">
+  </div>
 </div>
 
 <script type="text/javascript">
@@ -184,8 +193,13 @@ $(document).ready(function () {
     var width = $(window).width();
     var height = $(window).height();
 
-    $('#chart1').width(width - 20);
-    $('#chart1').height(height - 130);
+    $('#frame').width(width - 20);
+    $('#frame').height(height - 120);
+    $('#top').width(width - 20);
+    $('#chart').width(width - 20);
+    $('#chart').height(height - 150);
+    $('#bottom').width(width - 20);
+    $('#bottom').css('top', (height - 140));
   }
 
   $(window).resize(function () {
@@ -338,9 +352,9 @@ $(document).ready(function () {
         delete dataList[2]['stroke-width'];
       }
 
-      $('#chart1 svg').empty();
+      $('#chart svg').empty();
 
-      d3.select('#chart1 svg')
+      d3.select('#chart svg')
           .datum(dataList)
           .transition()
           .duration(500)
