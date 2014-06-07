@@ -338,6 +338,7 @@
       , state = {}
       , defaultState = null
       , noData = "No Data Available."
+      , interpolate = "linear"
       , dispatch = d3.dispatch('tooltipShow', 'tooltipHide', 'stateChange', 'changeState')
       ;
 
@@ -723,10 +724,6 @@
     chart.y2Axis = y2Axis;
     chart.y3Axis = y3Axis;
 
-    d3.rebind(chart, line1, 'defined', 'size', 'interpolate');
-    //TODO: consider rebinding x, y and some other stuff
-    //d3.rebind(chart, lines, 'x', 'y', 'size', 'xDomain', 'yDomain', 'xRange', 'yRange', 'forceX', 'forceY', 'interactive', 'clipEdge', 'id');
-
     chart.options = nv.utils.optionsFunc.bind(chart);
 
     chart.x = function (_) {
@@ -808,6 +805,15 @@
     chart.noData = function (_) {
       if (!arguments.length) return noData;
       noData = _;
+      return chart;
+    };
+
+    chart.interpolate = function (_) {
+      if (!arguments.length) return interpolate;
+      interpolate = _;
+      line1.interpolate(_);
+      line2.interpolate(_);
+      line3.interpolate(_);
       return chart;
     };
 

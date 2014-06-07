@@ -270,7 +270,8 @@ $(document).ready(function () {
           .y(function (d) {
             return d.y
           })
-          .color(d3.scale.category10().range());
+          .color(d3.scale.category10().range())
+          .interpolate('cardinal');
 
       chart.xAxis
           .showMaxMin(false)
