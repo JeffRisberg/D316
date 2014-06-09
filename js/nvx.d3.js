@@ -181,6 +181,7 @@
             if (d != null && d['use-bars'] != null && !d.disabled) {
               var rectData = d.values;
               var minY = y.domain()[0];
+              var maxY = y.domain()[1];
               var groupWidth = 1.0 * availableWidth / rectData.length
               var barIndex = d['bar-index'] || 0;
               var barCount = d['bar-count'] || 1;
@@ -208,10 +209,16 @@
                   return nv.utils.NaNtoZero(x(getX(d, i)) + barOffset - barWidth / 2);
                 })
                 .attr('y', function (d, i) {
-                  return nv.utils.NaNtoZero(y(getY(d, i)));
+                  if (getY(d, i) > 0)
+                    return nv.utils.NaNtoZero(y(getY(d, i)));
+                  else
+                    return nv.utils.NaNtoZero(y(Math.min(0, maxY)));
                 })
                 .attr('height', function (d, i) {
-                  return nv.utils.NaNtoZero(y(minY) - y(getY(d, i)))
+                  if (getY(d, i) > 0)
+                    return nv.utils.NaNtoZero(y(Math.max(0, minY)) - y(getY(d, i)))
+                  else
+                    return nv.utils.NaNtoZero(y(getY(d, i)) - y(Math.min(0, maxY)))
                 })
                 .attr('width', barWidth)
             }
