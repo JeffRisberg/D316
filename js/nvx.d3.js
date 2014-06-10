@@ -216,9 +216,9 @@
                 })
                 .attr('height', function (d, i) {
                   if (getY(d, i) > 0)
-                    return nv.utils.NaNtoZero(y(Math.max(0, minY)) - y(getY(d, i)))
+                    return 1 + nv.utils.NaNtoZero(y(Math.max(0, minY)) - y(getY(d, i)))
                   else
-                    return nv.utils.NaNtoZero(y(getY(d, i)) - y(Math.min(0, maxY)))
+                    return 1 + nv.utils.NaNtoZero(y(getY(d, i)) - y(Math.min(0, maxY)))
                 })
                 .attr('width', barWidth)
             }
@@ -638,7 +638,7 @@
 
         g.select('.nv-y3.nv-axis')
           .style('opacity', dataLines3.length ? 1 : 0)
-          .attr('transform', 'translate(' + (40 + availableWidth) + ',0)');
+          .attr('transform', 'translate(' + (margin.right/2 + availableWidth) + ',0)');
 
         d3.transition(g.select('.nv-y3.nv-axis'))
           .call(y3Axis);
