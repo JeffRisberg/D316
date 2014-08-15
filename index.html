@@ -332,21 +332,21 @@ $(document).ready(function () {
                 chart.line1.forceY([0]);
             }
             else {
-                chart.line1.forceY([]);
+                chart.line1.forceY([minValue1 - (maxValue1 - minValue1) / 30]);
             }
 
             if (priceIncludeZero) {
                 chart.line2.forceY([0]);
             }
             else {
-                chart.line2.forceY([]);
+                chart.line2.forceY([minValue2 - (maxValue2 - minValue2) / 30]);
             }
 
             if (costIncludeZero) {
                 chart.line3.forceY([0]);
             }
             else {
-                chart.line3.forceY([]);
+                chart.line3.forceY([minValue3 - (maxValue3 - minValue3) / 30]);
             }
 
             if (quantityHighlight) {
