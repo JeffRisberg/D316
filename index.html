@@ -70,13 +70,21 @@
         <td>
             <input type="checkbox" id="costIncludeZero">Include Zero
         </td>
+    </tr>
+    <tr>
         <td>
-            <input type="checkbox" id="useSameAxis">Use Same Axis
+            &nbsp;
+        </td>
+        <td>
+            <input type="checkbox" id="priceUseSameAxis">Use Same Axis
+        </td>
+        <td>
+            <input type="checkbox" id="costUseSameAxis">Use Same Axis
         </td>
     </tr>
 </table>
 
-<div id="frame" style="position: absolute; top: 120px; overflow: visible">
+<div id="frame" style="position: absolute; top: 140px; overflow: visible">
     <div id="top"
          style="position: absolute; top: 0px; height: 10px; width: 100%; background: blue; overflow: hidden">
     </div>
@@ -101,19 +109,20 @@ $(document).ready(function () {
     var quantityIncludeZero = false;
     var priceIncludeZero = false;
     var costIncludeZero = false;
-    var useSameAxis = false;
+    var priceUseSameAxis = false;
+    var costUseSameAxis = false;
     var dataList = [];
 
-    $("#pricePlotMode").on("change", function (e) {
-        pricePlotMode = $('#pricePlotMode').val();
+    $("#quantityPlotMode").on("change", function (e) {
+        quantityPlotMode = $('#quantityPlotMode').val();
 
         if (dataList.length > 0) {
             redraw();
         }
     });
 
-    $("#quantityPlotMode").on("change", function (e) {
-        quantityPlotMode = $('#quantityPlotMode').val();
+    $("#pricePlotMode").on("change", function (e) {
+        pricePlotMode = $('#pricePlotMode').val();
 
         if (dataList.length > 0) {
             redraw();
@@ -176,8 +185,16 @@ $(document).ready(function () {
         }
     });
 
-    $("#useSameAxis").on("change", function (e) {
-        useSameAxis = $('#useSameAxis').is(':checked');
+    $("#priceUseSameAxis").on("change", function (e) {
+        priceUseSameAxis = $('#priceUseSameAxis').is(':checked');
+
+        if (dataList.length > 0) {
+            redraw();
+        }
+    });
+
+    $("#costUseSameAxis").on("change", function (e) {
+        costUseSameAxis = $('#costUseSameAxis').is(':checked');
 
         if (dataList.length > 0) {
             redraw();
@@ -194,12 +211,12 @@ $(document).ready(function () {
         var height = $(window).height();
 
         $('#frame').width(width - 20);
-        $('#frame').height(height - 120);
+        $('#frame').height(height - 140);
         $('#top').width(width - 20);
         $('#chart').width(width - 20);
-        $('#chart').height(height - 150);
+        $('#chart').height(height - 160);
         $('#bottom').width(width - 20);
-        $('#bottom').css('top', (height - 140));
+        $('#bottom').css('top', (height - 160));
     }
 
     $(window).resize(function () {
@@ -215,12 +232,15 @@ $(document).ready(function () {
         var minValue3 = Number.MAX_VALUE;
         var maxValue3 = Number.MIN_VALUE;
 
-        if (useSameAxis) {
-            dataList[2]['axis'] = 2;
-        }
-        else {
-            dataList[2]['axis'] = 3;
-        }
+        var axisIndex = 1;
+        dataList[0]['axis'] = axisIndex;
+        console.log(pricePlotMode.indexOf("Same"));
+        if (priceUseSameAxis == false) axisIndex++;
+        dataList[1]['axis'] = axisIndex;
+        console.log(costPlotMode.indexOf("Same"));
+        if (costUseSameAxis == false) axisIndex++;
+        dataList[2]['axis'] = axisIndex;
+
         dataList.forEach(function (data) {
             var axis = data.axis;
             data.values.forEach(function (valuePair) {
